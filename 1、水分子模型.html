@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修正键位的水分子3D结构</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 100%;
+            color: white;
+            background-color: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.min.js"></script> 
+    
+    <script>
+        // 初始化场景 
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight,  0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth,  window.innerHeight); 
+        document.body.appendChild(renderer.domElement); 
+ 
+        // 光源设置 
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(1,  1, 1);
+        scene.add(light); 
+        scene.add(new  THREE.AmbientLight(0x404040));
+ 
+        // 原子参数 
+        const oxygenRadius = 0.6;
+        const hydrogenRadius = 0.4;
+        const bondRadius = 0.1;
+        const bondLength = 1.2; // 缩放后的键长 
+ 
+        // 创建水分子（修正键位）
+        function createWaterMolecule() {
+            const group = new THREE.Group();
+            const angle = 104.5 * Math.PI / 180; // 精确键角 
+ 
+            // 氧原子（红色）
+            const oxygen = new THREE.Mesh(
+                new THREE.SphereGeometry(oxygenRadius, 32, 32),
+                new THREE.MeshPhongMaterial({ color: 0xff4444 })
+            );
+            group.add(oxygen); 
+ 
+            // 氢原子（白色）
+            const hydrogenMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            const h1 = new THREE.Mesh(new THREE.SphereGeometry(hydrogenRadius, 32, 32), hydrogenMaterial);
+            const h2 = new THREE.Mesh(new THREE.SphereGeometry(hydrogenRadius, 32, 32), hydrogenMaterial);
+            
+            // 修正后的氢原子位置 
+            h1.position.set( 
+                bondLength * Math.sin(angle/2), 
+                bondLength * Math.cos(angle/2), 
+                0 
+            );
+            h2.position.set( 
+                -bondLength * Math.sin(angle/2), 
+                bondLength * Math.cos(angle/2), 
+                0 
+            );
+            group.add(h1); 
+            group.add(h2); 
+ 
+            // 修正键的位置和方向 
+            const bondMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xcccccc,
+                transparent: true,
+                opacity: 0.8 
+            });
+ 
+            // 键1（O-H1）
+            const bond1 = new THREE.Mesh(
+                new THREE.CylinderGeometry(bondRadius, bondRadius, bondLength, 8),
+                bondMaterial 
+            );
+            bond1.position.copy(h1.position).multiplyScalar(0.5); 
+            bond1.quaternion.setFromUnitVectors( 
+                new THREE.Vector3(0, 1, 0),
+                new THREE.Vector3().copy(h1.position).normalize() 
+            );
+            group.add(bond1); 
+ 
+            // 键2（O-H2）
+            const bond2 = new THREE.Mesh(
+                new THREE.CylinderGeometry(bondRadius, bondRadius, bondLength, 8),
+                bondMaterial 
+            );
+            bond2.position.copy(h2.position).multiplyScalar(0.5); 
+            bond2.quaternion.setFromUnitVectors( 
+                new THREE.Vector3(0, 1, 0),
+                new THREE.Vector3().copy(h2.position).normalize() 
+            );
+            group.add(bond2); 
+ 
+            return group;
+        }
+ 
+        const molecule = createWaterMolecule();
+        scene.add(molecule); 
+ 
+        // 相机控制 
+        camera.position.z  = 3;
+        const controls = new THREE.OrbitControls(camera, renderer.domElement); 
+        controls.enableDamping  = true;
+ 
+        // 动画循环 
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); 
+            renderer.render(scene,  camera);
+        }
+        animate();
+ 
+        // 响应窗口大小变化 
+        window.addEventListener('resize',  () => {
+            camera.aspect  = window.innerWidth  / window.innerHeight; 
+            camera.updateProjectionMatrix(); 
+            renderer.setSize(window.innerWidth,  window.innerHeight); 
+        });
+    </script>
+</body>
+</html>

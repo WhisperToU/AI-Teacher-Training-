@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>晚自习教师值班状态</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap"  rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --danger-color: #f72585;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            overflow-x: hidden;
+            overflow-y: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        
+        .header p {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        
+        .teachers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .teacher-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .teacher-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+        
+        .teacher-card.available  .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+        }
+        
+        .teacher-card.unavailable  .card-header {
+            background: linear-gradient(135deg, #6c757d, #adb5bd);
+        }
+        
+        .card-header {
+            padding: 1.5rem;
+            color: white;
+            position: relative;
+        }
+        
+        .teacher-name {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-left: 0.75rem;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .status-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 50px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .status-toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        
+        .teacher-card.available  .status-toggle::after {
+            transform: translateX(24px);
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .students-title {
+            font-size: 1rem;
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .add-student-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .add-student-btn:hover {
+            background: var(--secondary-color);
+            transform: rotate(90deg);
+        }
+        
+        .student-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--light-color);
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        
+        .student-item:hover {
+            background: #e9ecef;
+        }
+        
+        .student-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .student-name {
+            margin-right: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .student-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .student-actions {
+            display: flex;
+        }
+        
+        .edit-btn, .delete-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-left: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .edit-btn {
+            background: #ffc107;
+            color: white;
+        }
+        
+        .delete-btn {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .edit-btn:hover, .delete-btn:hover {
+            opacity: 0.8;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 1.5rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+        
+        .modal.active  {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 400px;
+            padding: 2rem;
+            box-shadow: var(--box-shadow);
+            transform: translateY(-20px);
+            transition: var(--transition);
+        }
+        
+        .modal.active  .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            margin: 0;
+            color: var(--primary-color);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .form-input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .floating-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: var(--transition);
+            z-index: 100;
+            border: none;
+        }
+        
+        .floating-btn:hover {
+            background: var(--secondary-color);
+            transform: scale(1.1);
+        }
+        
+        .update-time {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+        
+        .time-highlight {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .teachers-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>晚自习教师值班系统</h1>
+            <p>当前时间: <span class="time-highlight" id="current-time"></span></p>
+            <p class="update-time">最后更新时间: <span id="update-time"></span></p>
+        </div>
+        
+        <div class="teachers-grid" id="teachers-container">
+            <!-- 教师卡片将通过JavaScript动态生成 -->
+        </div>
+    </div>
+    
+    <button class="floating-btn" id="add-teacher-btn">+</button>
+    
+    <!-- 添加/编辑教师模态框 -->
+    <div class="modal" id="teacher-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-teacher-title">添加新教师</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="teacher-name" class="form-label">教师姓名</label>
+                    <input type="text" id="teacher-name" class="form-input" placeholder="请输入教师姓名">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-teacher-btn">取消</button>
+                <button class="btn btn-primary" id="save-teacher-btn">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加/编辑学生模态框 -->
+    <div class="modal" id="student-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-student-title">添加学生</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="student-name" class="form-label">学生姓名</label>
+                    <input type="text" id="student-name" class="form-input" placeholder="请输入学生姓名">
+                </div>
+                <div class="form-group">
+                    <label for="student-time" class="form-label">开始时间</label>
+                    <input type="time" id="student-time" class="form-input">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-student-btn">取消</button>
+                <button class="btn btn-primary" id="save-student-btn">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 教师数据 
+        let teachers = [
+            {
+                id: 1,
+                name: "张老师",
+                available: true,
+                students: [
+                    { id: 101, name: "张三", startTime: "19:15" },
+                    { id: 102, name: "李四", startTime: "19:20" }
+                ]
+            },
+            {
+                id: 2,
+                name: "王老师",
+                available: true,
+                students: [
+                    { id: 103, name: "王五", startTime: "19:10" }
+                ]
+            },
+            {
+                id: 3,
+                name: "李老师",
+                available: false,
+                students: []
+            }
+        ];
+        
+        // 模态框状态 
+        let currentModal = null;
+        let currentTeacherId = null;
+        let currentStudentId = null;
+        let isEditingTeacher = false;
+        let isEditingStudent = false;
+        
+        // DOM元素 
+        const teachersContainer = document.getElementById('teachers-container'); 
+        const teacherModal = document.getElementById('teacher-modal'); 
+        const studentModal = document.getElementById('student-modal'); 
+        const addTeacherBtn = document.getElementById('add-teacher-btn'); 
+        const saveTeacherBtn = document.getElementById('save-teacher-btn'); 
+        const cancelTeacherBtn = document.getElementById('cancel-teacher-btn'); 
+        const saveStudentBtn = document.getElementById('save-student-btn'); 
+        const cancelStudentBtn = document.getElementById('cancel-student-btn'); 
+        const teacherNameInput = document.getElementById('teacher-name'); 
+        const studentNameInput = document.getElementById('student-name'); 
+        const studentTimeInput = document.getElementById('student-time'); 
+        const modalTeacherTitle = document.getElementById('modal-teacher-title'); 
+        const modalStudentTitle = document.getElementById('modal-student-title'); 
+        const updateTimeEl = document.getElementById('update-time'); 
+        const currentTimeEl = document.getElementById('current-time'); 
+        
+        // 初始化 
+        function init() {
+            updateDisplay();
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            setInterval(updateDisplay, 30000);
+            
+            // 事件监听 
+            addTeacherBtn.addEventListener('click',  () => {
+                openTeacherModal();
+            });
+            
+            saveTeacherBtn.addEventListener('click',  saveTeacher);
+            cancelTeacherBtn.addEventListener('click',  closeModal);
+            saveStudentBtn.addEventListener('click',  saveStudent);
+            cancelStudentBtn.addEventListener('click',  closeModal);
+        }
+        
+        // 更新显示 
+        function updateDisplay() {
+            teachersContainer.innerHTML  = '';
+            
+            teachers.forEach(teacher  => {
+                const card = document.createElement('div'); 
+                card.className  = `teacher-card ${teacher.available  ? 'available' : 'unavailable'}`;
+                card.dataset.teacherId  = teacher.id; 
+                
+                // 卡片头部 
+                const cardHeader = document.createElement('div'); 
+                cardHeader.className  = 'card-header';
+                
+                const teacherName = document.createElement('h3'); 
+                teacherName.className  = 'teacher-name';
+                
+                const statusBadge = document.createElement('span'); 
+                statusBadge.className  = 'status-badge';
+                statusBadge.textContent  = teacher.available  ? '在岗' : '离岗';
+                
+                teacherName.textContent  = teacher.name; 
+                teacherName.appendChild(statusBadge); 
+                
+                // 状态切换按钮 
+                const statusToggle = document.createElement('div'); 
+                statusToggle.className  = 'status-toggle';
+                statusToggle.addEventListener('click',  (e) => {
+                    e.stopPropagation(); 
+                    toggleTeacherStatus(teacher.id); 
+                });
+                
+                cardHeader.appendChild(teacherName); 
+                cardHeader.appendChild(statusToggle); 
+                
+                // 卡片主体 
+                const cardBody = document.createElement('div'); 
+                cardBody.className  = 'card-body';
+                
+                const studentsTitle = document.createElement('div'); 
+                studentsTitle.className  = 'students-title';
+                
+                const studentsCount = document.createElement('span'); 
+                studentsCount.textContent  = `辅导学生 (${teacher.students.length})`; 
+                
+                const addStudentBtn = document.createElement('button'); 
+                addStudentBtn.className  = 'add-student-btn';
+                addStudentBtn.innerHTML  = '+';
+                addStudentBtn.addEventListener('click',  (e) => {
+                    e.stopPropagation(); 
+                    openStudentModal(teacher.id); 
+                });
+                
+                studentsTitle.appendChild(studentsCount); 
+                studentsTitle.appendChild(addStudentBtn); 
+                
+                const studentList = document.createElement('ul'); 
+                studentList.className  = 'student-list';
+                
+                if (teacher.students.length  === 0) {
+                    const emptyState = document.createElement('div'); 
+                    emptyState.className  = 'empty-state';
+                    emptyState.textContent  = '暂无学生';
+                    studentList.appendChild(emptyState); 
+                } else {
+                    teacher.students.forEach(student  => {
+                        const studentItem = document.createElement('li'); 
+                        studentItem.className  = 'student-item';
+                        studentItem.dataset.studentId  = student.id; 
+                        
+                        const studentInfo = document.createElement('div'); 
+                        studentInfo.className  = 'student-info';
+                        
+                        const studentName = document.createElement('span'); 
+                        studentName.className  = 'student-name';
+                        studentName.textContent  = student.name; 
+                        
+                        const studentTime = document.createElement('span'); 
+                        studentTime.className  = 'student-time';
+                        studentTime.textContent  = student.startTime; 
+                        
+                        studentInfo.appendChild(studentName); 
+                        studentInfo.appendChild(studentTime); 
+                        
+                        const studentActions = document.createElement('div'); 
+                        studentActions.className  = 'student-actions';
+                        
+                        const editBtn = document.createElement('button'); 
+                        editBtn.className  = 'edit-btn';
+                        editBtn.innerHTML  = '✏️';
+                        editBtn.addEventListener('click',  (e) => {
+                            e.stopPropagation(); 
+                            editStudent(teacher.id,  student.id); 
+                        });
+                        
+                        const deleteBtn = document.createElement('button'); 
+                        deleteBtn.className  = 'delete-btn';
+                        deleteBtn.innerHTML  = '🗑️';
+                        deleteBtn.addEventListener('click',  (e) => {
+                            e.stopPropagation(); 
+                            deleteStudent(teacher.id,  student.id); 
+                        });
+                        
+                        studentActions.appendChild(editBtn); 
+                        studentActions.appendChild(deleteBtn); 
+                        
+                        studentItem.appendChild(studentInfo); 
+                        studentItem.appendChild(studentActions); 
+                        
+                        studentList.appendChild(studentItem); 
+                    });
+                }
+                
+                cardBody.appendChild(studentsTitle); 
+                cardBody.appendChild(studentList); 
+                
+                // 编辑教师按钮 
+                const editTeacherBtn = document.createElement('button'); 
+                editTeacherBtn.className  = 'btn btn-secondary';
+                editTeacherBtn.style.marginTop  = '1rem';
+                editTeacherBtn.style.width  = '100%';
+                editTeacherBtn.textContent  = '编辑教师';
+                editTeacherBtn.addEventListener('click',  (e) => {
+                    e.stopPropagation(); 
+                    editTeacher(teacher.id); 
+                });
+                
+                cardBody.appendChild(editTeacherBtn); 
+                
+                card.appendChild(cardHeader); 
+                card.appendChild(cardBody); 
+                
+                // 点击卡片切换状态 
+                card.addEventListener('click',  () => {
+                    toggleTeacherStatus(teacher.id); 
+                });
+                
+                teachersContainer.appendChild(card); 
+            });
+            
+            // 更新最后更新时间 
+            updateTimeEl.textContent  = new Date().toLocaleString();
+        }
+        
+        // 更新当前时间 
+        function updateCurrentTime() {
+            const now = new Date();
+            currentTimeEl.textContent  = now.toLocaleString(); 
+        }
+        
+        // 切换教师状态 
+        function toggleTeacherStatus(teacherId) {
+            const teacher = teachers.find(t  => t.id  === teacherId);
+            if (teacher) {
+                teacher.available  = !teacher.available; 
+                updateDisplay();
+                
+                // 在实际应用中，这里应该发送到服务器保存 
+                console.log(` 教师 ${teacher.name}  状态更新为: ${teacher.available  ? '在岗' : '离岗'}`);
+            }
+        }
+        
+        // 打开教师模态框 
+        function openTeacherModal(teacherId = null) {
+            currentTeacherId = teacherId;
+            isEditingTeacher = teacherId !== null;
+            
+            if (isEditingTeacher) {
+                const teacher = teachers.find(t  => t.id  === teacherId);
+                if (teacher) {
+                    teacherNameInput.value  = teacher.name; 
+                    modalTeacherTitle.textContent  = '编辑教师';
+                }
+            } else {
+                teacherNameInput.value  = '';
+                modalTeacherTitle.textContent  = '添加新教师';
+            }
+            
+            currentModal = 'teacher';
+            teacherModal.classList.add('active'); 
+        }
+        
+        // 打开学生模态框 
+        function openStudentModal(teacherId, studentId = null) {
+            currentTeacherId = teacherId;
+            currentStudentId = studentId;
+            isEditingStudent = studentId !== null;
+            
+            if (isEditingStudent) {
+                const teacher = teachers.find(t  => t.id  === teacherId);
+                if (teacher) {
+                    const student = teacher.students.find(s  => s.id  === studentId);
+                    if (student) {
+                        studentNameInput.value  = student.name; 
+                        studentTimeInput.value  = student.startTime; 
+                        modalStudentTitle.textContent  = '编辑学生';
+                    }
+                }
+            } else {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2,  '0');
+                const minutes = String(now.getMinutes()).padStart(2,  '0');
+                
+                studentNameInput.value  = '';
+                studentTimeInput.value  = `${hours}:${minutes}`;
+                modalStudentTitle.textContent  = '添加学生';
+            }
+            
+            currentModal = 'student';
+            studentModal.classList.add('active'); 
+        }
+        
+        // 关闭模态框 
+        function closeModal() {
+            teacherModal.classList.remove('active'); 
+            studentModal.classList.remove('active'); 
+            currentModal = null;
+            currentTeacherId = null;
+            currentStudentId = null;
+        }
+        
+        // 保存教师 
+        function saveTeacher() {
+            const name = teacherNameInput.value.trim(); 
+            
+            if (!name) {
+                alert('请输入教师姓名');
+                return;
+            }
+            
+            if (isEditingTeacher) {
+                // 编辑现有教师 
+                const teacher = teachers.find(t  => t.id  === currentTeacherId);
+                if (teacher) {
+                    teacher.name  = name;
+                    console.log(` 教师信息已更新: ${name}`);
+                }
+            } else {
+                // 添加新教师 
+                const newId = teachers.length  > 0 ? Math.max(...teachers.map(t  => t.id))  + 1 : 1;
+                teachers.push({ 
+                    id: newId,
+                    name: name,
+                    available: true,
+                    students: []
+                });
+                console.log(` 新教师已添加: ${name}`);
+            }
+            
+            closeModal();
+            updateDisplay();
+        }
+        
+        // 保存学生 
+        function saveStudent() {
+            const name = studentNameInput.value.trim(); 
+            const time = studentTimeInput.value; 
+            
+            if (!name) {
+                alert('请输入学生姓名');
+                return;
+            }
+            
+            if (!time) {
+                alert('请选择开始时间');
+                return;
+            }
+            
+            const teacher = teachers.find(t  => t.id  === currentTeacherId);
+            if (!teacher) return;
+            
+            if (isEditingStudent) {
+                // 编辑现有学生 
+                const student = teacher.students.find(s  => s.id  === currentStudentId);
+                if (student) {
+                    student.name  = name;
+                    student.startTime  = time;
+                    console.log(` 学生信息已更新: ${name}`);
+                }
+            } else {
+                // 添加新学生 
+                const newId = teacher.students.length  > 0 ? Math.max(...teacher.students.map(s  => s.id))  + 1 : 1;
+                teacher.students.push({ 
+                    id: newId,
+                    name: name,
+                    startTime: time 
+                });
+                console.log(` 新学生已添加: ${name}`);
+            }
+            
+            closeModal();
+            updateDisplay();
+        }
+        
+        // 编辑教师 
+        function editTeacher(teacherId) {
+            openTeacherModal(teacherId);
+        }
+        
+        // 编辑学生 
+        function editStudent(teacherId, studentId) {
+            openStudentModal(teacherId, studentId);
+        }
+        
+        // 删除学生 
+        function deleteStudent(teacherId, studentId) {
+            if (!confirm('确定要删除这个学生吗？')) return;
+            
+            const teacher = teachers.find(t  => t.id  === teacherId);
+            if (teacher) {
+                teacher.students  = teacher.students.filter(s  => s.id  !== studentId);
+                updateDisplay();
+                console.log(` 学生ID ${studentId} 已删除`);
+            }
+        }
+        
+        // 启动应用 
+        init();
+    </script>
+</body>
+</html>

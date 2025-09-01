@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>deepseek在教育中的应用</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --bg-color: #fafafa;
+            --text-color: #333;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+ 
+        .slides-container {
+            width: 90%;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+ 
+        .slide {
+            width: 100%;
+            height: 100vh;
+            padding: 5% 10%;
+            box-sizing: border-box;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+ 
+        .slide.active  {
+            display: flex;
+            opacity: 1;
+        }
+ 
+        h1 {
+            font-weight: 300;
+            font-size: 2.8rem;
+            margin-bottom: 2rem;
+            line-height: 1.2;
+        }
+ 
+        p {
+            font-weight: 300;
+            font-size: 1.4rem;
+            line-height: 1.6;
+            max-width: 700px;
+            opacity: 0.9;
+        }
+ 
+        /* 极简箭头导航 */
+        .nav-arrows {
+            position: fixed;
+            bottom: 5vh;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 2rem;
+        }
+ 
+        .arrow {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(66, 133, 244, 0.1);
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            user-select: none;
+        }
+ 
+        .arrow:hover {
+            background: rgba(66, 133, 244, 0.2);
+            transform: scale(1.1);
+        }
+ 
+        .arrow:active {
+            transform: scale(0.95);
+        }
+ 
+        .arrow.disabled  {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+ 
+        /* 极简部分进度条 */
+        .section-progress {
+            width: 8%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0 1%;
+        }
+ 
+        .section-indicator {
+            width: 4px;
+            height: 60vh;
+            background: #e0e0e0;
+            border-radius: 2px;
+            position: relative;
+        }
+ 
+        .section-marker {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #bdbdbd;
+            transition: all 0.4s ease;
+        }
+ 
+        .section-marker.active  {
+            width: 16px;
+            height: 16px;
+            background: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.2);
+        }
+ 
+        .section-marker:nth-child(1) { top: 10%; }
+        .section-marker:nth-child(2) { top: 50%; }
+        .section-marker:nth-child(3) { top: 90%; }
+ 
+        /* 极简动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+ 
+        .slide.active  h1 {
+            animation: fadeIn 0.6s both 0.2s;
+        }
+ 
+        .slide.active  p {
+            animation: fadeIn 0.6s both 0.4s;
+        }
+    </style>
+</head>
+<body>
+    <div class="slides-container">
+        <!-- 第一部分 -->
+        <section class="slide active" data-section="1">
+            <div class="slide-header">
+                <h1>简洁设计的力量</h1>
+                <p class="subtitle">去除冗余元素，聚焦核心教学内容</p>
+            </div>
+            
+            <div class="model-container">
+                
+                <div class="model-wrapper">
+                    <div class="sketchfab-embed-wrapper"> 
+                        <iframe title="Heart" frameborder="0" allowfullscreen mozallowfullscreen="true" 
+                        webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" 
+                        xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered 
+                        web-share src="https://sketchfab.com/models/68fd27ffcdc443f2aa00c91f1fd16e96/embed">
+                        </iframe> 
+                    </div>
+                    <p class="model-credit">
+                        <a href="https://sketchfab.com/3d-models/heart-68fd27ffcdc443f2aa00c91f1fd16e96" 
+                        target="_blank" rel="nofollow">Heart</a> by 
+                        <a href="https://sketchfab.com/17726353270" target="_blank" rel="nofollow">17726353270</a>
+                    </p>
+                </div>
+            </div>
+        </section>
+        <section class="slide" data-section="1">
+            <h1>视觉层次清晰</h1>
+            <p>通过留白和排版建立内容优先级</p>
+        </section>
+        <section class="slide" data-section="1">
+            <h1>一致性原则</h1>
+            <p>保持导航和交互模式统一</p>
+        </section>
+ 
+        <!-- 第二部分 -->
+        <section class="slide" data-section="2">
+            <h1>认知负荷理论</h1>
+            <p>简化界面降低学生认知负担</p>
+        </section>
+        <section class="slide" data-section="2">
+            <h1>焦点引导</h1>
+            <p>使用动画自然引导注意力</p>
+        </section>
+        <section class="slide" data-section="2">
+            <h1>响应式交互</h1>
+            <p>微交互提供操作反馈</p>
+        </section>
+ 
+        <!-- 第三部分 -->
+        <section class="slide" data-section="3">
+            <h1>色彩心理学</h1>
+            <p>蓝色系营造专注学习氛围</p>
+        </section>
+        <section class="slide" data-section="3">
+            <h1>字体可读性</h1>
+            <p>无衬线字体提升屏幕阅读体验</p>
+        </section>
+        <section class="slide" data-section="3">
+            <h1>极简主义</h1>
+            <p>"少即是多"的教学设计哲学</p>
+        </section>
+ 
+        <!-- 箭头导航 -->
+        <div class="nav-arrows">
+            <div class="arrow" id="prev-arrow">←</div>
+            <div class="arrow" id="next-arrow">→</div>
+        </div>
+    </div>
+ 
+    <!-- 极简进度条 -->
+    <div class="section-progress">
+        <div class="section-indicator">
+            <div class="section-marker active" data-section="1"></div>
+            <div class="section-marker" data-section="2"></div>
+            <div class="section-marker" data-section="3"></div>
+        </div>
+    </div>
+ 
+    <script>
+        document.addEventListener('DOMContentLoaded',  function() {
+            const slides = document.querySelectorAll('.slide'); 
+            const markers = document.querySelectorAll('.section-marker'); 
+            const prevArrow = document.getElementById('prev-arrow'); 
+            const nextArrow = document.getElementById('next-arrow'); 
+            let currentSlide = 0;
+ 
+            // 初始化 
+            updateUI();
+ 
+            // 下一页 
+            nextArrow.addEventListener('click',  navigateTo.bind(null,  1));
+            
+            // 上一页 
+            prevArrow.addEventListener('click',  navigateTo.bind(null,  -1));
+ 
+            // 键盘控制 
+            document.addEventListener('keydown',  (e) => {
+                if (e.key  === 'ArrowRight') navigateTo(1);
+                if (e.key  === 'ArrowLeft') navigateTo(-1);
+            });
+ 
+            // 进度标记点击 
+            markers.forEach(marker  => {
+                marker.addEventListener('click',  function() {
+                    const targetSection = this.dataset.section; 
+                    const targetIndex = Array.from(slides).findIndex(  
+                        slide => slide.dataset.section  === targetSection 
+                    );
+                    if (targetIndex !== -1) navigateTo(targetIndex - currentSlide);
+                });
+            });
+ 
+            function navigateTo(step) {
+                const newIndex = currentSlide + step;
+                if (newIndex >= 0 && newIndex < slides.length)  {
+                    slides[currentSlide].classList.remove('active'); 
+                    currentSlide = newIndex;
+                    slides[currentSlide].classList.add('active'); 
+                    updateUI();
+                }
+            }
+ 
+            function updateUI() {
+                // 更新箭头状态 
+                prevArrow.classList.toggle('disabled',  currentSlide === 0);
+                nextArrow.classList.toggle('disabled',  currentSlide === slides.length  - 1);
+ 
+                // 更新进度标记 
+                const currentSection = slides[currentSlide].dataset.section; 
+                markers.forEach(marker  => {
+                    marker.classList.toggle('active',  marker.dataset.section  === currentSection);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

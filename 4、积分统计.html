@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班级小组积分管理系统</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .control-panel {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .group-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .group-card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .group-name {
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+        .group-points {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .group-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 5px;
+        }
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .add-btn {
+            background-color: #27ae60;
+            color: white;
+        }
+        .add-btn:hover {
+            background-color: #2ecc71;
+        }
+        .minus-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .minus-btn:hover {
+            background-color: #c0392b;
+        }
+        .reset-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        .reset-btn:hover {
+            background-color: #2980b9;
+        }
+        .sort-btn {
+            background-color: #9b59b6;
+            color: white;
+            padding: 10px 15px;
+            margin-right: 10px;
+        }
+        .sort-btn:hover {
+            background-color: #8e44ad;
+        }
+        .export-btn {
+            background-color: #f39c12;
+            color: white;
+            padding: 10px 15px;
+        }
+        .export-btn:hover {
+            background-color: #e67e22;
+        }
+        .medal {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .gold {
+            background-color: gold;
+        }
+        .silver {
+            background-color: silver;
+        }
+        .bronze {
+            background-color: #cd7f32; /* bronze */
+        }
+        .rank {
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+        .point-input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .top-three {
+            background-color: #fffde7;
+        }
+    </style>
+</head>
+<body>
+    <h1>班级小组积分管理系统</h1>
+    
+    <div class="control-panel">
+        <button id="sortBtn" class="sort-btn">按积分排序</button>
+        <button id="exportBtn" class="export-btn">导出积分数据</button>
+    </div>
+    
+    <div class="group-container" id="groupContainer">
+        <!-- 小组卡片将通过JavaScript动态生成 -->
+    </div>
+
+    <script>
+        // 初始化小组数据
+        let groups = [];
+        for (let i = 1; i <= 10; i++) {
+            groups.push({
+                id: i,
+                name: `第${i}小组`,
+                points: 0
+            });
+        }
+
+        // 渲染小组卡片
+        function renderGroups(sorted = false) {
+            const container = document.getElementById('groupContainer');
+            container.innerHTML = '';
+            
+            // 如果需要排序，先排序
+            let displayGroups = [...groups];
+            if (sorted) {
+                displayGroups.sort((a, b) => b.points - a.points);
+            }
+            
+            displayGroups.forEach((group, index) => {
+                const card = document.createElement('div');
+                card.className = 'group-card';
+                
+                // 为前三名添加特殊样式
+                if (sorted && index < 3) {
+                    card.classList.add('top-three');
+                }
+                
+                let medal = '';
+                if (sorted) {
+                    if (index === 0) medal = '<span class="medal gold"></span>';
+                    else if (index === 1) medal = '<span class="medal silver"></span>';
+                    else if (index === 2) medal = '<span class="medal bronze"></span>';
+                }
+                
+                const rankDisplay = sorted ? `<span class="rank">${index + 1}</span>` : '';
+                
+                card.innerHTML = `
+                    <div class="group-header">
+                        <div class="group-name">${medal}${group.name} ${rankDisplay}</div>
+                    </div>
+                    <div class="group-points">${group.points} 分</div>
+                    <div class="group-actions">
+                        <input type="number" class="point-input" id="input-${group.id}" placeholder="分值" value="5" min="1">
+                        <button class="add-btn" onclick="changePoints(${group.id}, true)">加分</button>
+                        <button class="minus-btn" onclick="changePoints(${group.id}, false)">减分</button>
+                        <button class="reset-btn" onclick="resetPoints(${group.id})">清零</button>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // 改变分数
+        function changePoints(groupId, isAdd) {
+            const group = groups.find(g => g.id === groupId);
+            const input = document.getElementById(`input-${groupId}`);
+            let points = parseInt(input.value) || 1;
+            
+            if (isAdd) {
+                group.points += points;
+            } else {
+                group.points = Math.max(0, group.points - points);
+            }
+            
+            renderGroups(document.getElementById('sortBtn').classList.contains('active'));
+        }
+
+        // 重置分数
+        function resetPoints(groupId) {
+            if (confirm('确定要清零该小组的积分吗？')) {
+                const group = groups.find(g => g.id === groupId);
+                group.points = 0;
+                renderGroups(document.getElementById('sortBtn').classList.contains('active'));
+            }
+        }
+
+        // 排序功能
+        document.getElementById('sortBtn').addEventListener('click', function() {
+            this.classList.toggle('active');
+            renderGroups(this.classList.contains('active'));
+        });
+
+        // 导出数据功能
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            let csv = '小组名称,积分\n';
+            groups.forEach(group => {
+                csv += `${group.name},${group.points}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `班级小组积分_${new Date().toLocaleDateString()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // 初始渲染
+        renderGroups();
+    </script>
+</body>
+</html>

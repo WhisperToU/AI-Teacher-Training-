@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>幸运之星大抽奖</title>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&family=Ma+Shan+Zheng&display=swap"  rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff4d4f;
+            --secondary-color: #faad14;
+            --dark-color: #1d1d1d;
+            --light-color: #f0f2f5;
+            --accent-color: #13c2c2;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1d1d1d 0%, #3a3a3a 100%), 
+                        url('https://img.freepik.com/free-vector/golden-glitter-particles-background_1048-6704.jpg')  no-repeat center/cover;
+            background-blend-mode: overlay;
+            font-family: 'ZCOOL QingKe HuangYou', cursive;
+            color: white;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 粒子背景效果 */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, var(--secondary-color) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(1px);
+            opacity: 0.7;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* 顶部装饰 */
+        .top-decoration {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(to bottom, rgba(255,215,0,0.2), transparent);
+            display: flex;
+            justify-content: space-between;
+            padding: 0 50px;
+        }
+        
+        .top-decoration span {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            opacity: 0.8;
+        }
+        
+        /* 主标题 */
+        .header {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 4em;
+            color: var(--secondary-color);
+            text-shadow: 0 0 10px rgba(255,215,0,0.5),
+                         0 0 20px rgba(255,215,0,0.3),
+                         0 0 30px rgba(255,215,0,0.2);
+            margin: 40px 0 30px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .header::before, .header::after {
+            content: "✨";
+            position: absolute;
+            font-size: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: twinkle 2s infinite alternate;
+        }
+        
+        .header::before {
+            left: -50px;
+        }
+        
+        .header::after {
+            right: -50px;
+        }
+        
+        @keyframes twinkle {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+        
+        /* 主要内容区 */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 80%;
+            max-width: 1000px;
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        /* 名字显示区域 */
+        #nameDisplay {
+            font-size: 5em;
+            text-align: center;
+            padding: 40px 60px;
+            background: rgba(30, 30, 30, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255,215,0,0.2),
+                        inset 0 0 15px rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,215,0,0.3);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            min-width: 500px;
+            position: relative;
+            overflow: hidden;
+            color: var(--light-color);
+            margin: 30px 0;
+        }
+        
+        #nameDisplay::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                transparent 45%,
+                rgba(255,215,0,0.1) 50%,
+                transparent 55%
+            );
+            transform: rotate(30deg);
+            animation: shine 5s infinite linear;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
+        
+        /* 控制区域 */
+        .controls {
+            margin: 30px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        /* 速度控制滑块 */
+        .speed-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .speed-label {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: var(--light-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .speed-control {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .speed-control::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+        
+        /* 按钮样式 */
+        button {
+            padding: 18px 45px;
+            font-size: 1.8em;
+            font-family: 'Ma Shan Zheng', cursive;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.5s;
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        /* 结果显示 */
+        #result {
+            font-size: 2.5em;
+            color: var(--secondary-color);
+            margin-top: 30px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+            opacity: 0;
+            transition: all 0.5s;
+            height: 60px;
+        }
+        
+        /* 选中效果 */
+        .selected {
+            animation: selected-effect 0.5s forwards;
+            color: var(--secondary-color) !important;
+            text-shadow: 0 0 10px var(--secondary-color);
+        }
+        
+        @keyframes selected-effect {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 底部装饰 */
+        .bottom-decoration {
+            position: relative;
+            width: 100%;
+            height: 100px;
+            margin-top: auto;
+            overflow: hidden;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            opacity: 0;
+            animation: confetti-fall 5s linear forwards;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header {
+                font-size: 2.5em;
+                margin: 20px 0;
+            }
+            
+            .header::before, .header::after {
+                font-size: 1rem;
+            }
+            
+            .header::before {
+                left: -30px;
+            }
+            
+            .header::after {
+                right: -30px;
+            }
+            
+            #nameDisplay {
+                font-size: 3em;
+                min-width: 300px;
+                padding: 20px 30px;
+            }
+            
+            button {
+                font-size: 1.5em;
+                padding: 15px 30px;
+            }
+            
+            #result {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- 顶部装饰 -->
+    <div class="top-decoration">
+        <span>🎯</span>
+        <span>🏆</span>
+    </div>
+    
+    <!-- 主标题 -->
+    <h1 class="header">幸运之星大抽奖</h1>
+    
+    <!-- 主要内容区 -->
+    <div class="main-area">
+        <div id="nameDisplay">点击开始抽取幸运儿</div>
+    </div>
+    
+    <!-- 控制区域 -->
+    <div class="controls">
+        <div class="speed-container">
+            <div class="speed-label">
+                <span>🐢</span>
+                <span>抽奖速度</span>
+                <span>🐇</span>
+            </div>
+            <input type="range" class="speed-control" min="5" max="100" value="50">
+        </div>
+        <button onclick="toggleRoll()">开始抽奖</button>
+        <div id="result"></div>
+    </div>
+    
+    <!-- 底部装饰 -->
+    <div class="bottom-decoration" id="confetti-container"></div>
+    
+    <script>
+        // 参与者名单 
+        const names = [
+            "卢城宏", "李可馨", "向诗雅", "李欣宇", "叶思源", 
+            "马诗其", "张雨乐", "李丞玄", "李瞻君", "罗玺", 
+            "高弋舜", "李思翰", "冯弈恺", "王昭颖", "周芮志", 
+            "苏恒", "方铭宇", "陈奥", "张雨桐", "陈漪萱", 
+            "白静曦", "吴垚楠", "易全欣睿", "柳旭", "胥信宇", 
+            "王晨宇", "杨梓晨", "宋李赫", "李雨润", "王佳依", 
+            "韩武辰", "吴昕翼", "郑牟宇", "王海松", "董芷伊", 
+            "杨洋", "罗杨楷", "禹东成", "张海洋", "高雨辰", 
+            "陈越岭", "胥一", "何雨轩", "侯泳汐", "王寒阳", 
+            "叶文瀚", "肖洋", "付峻熙", "王嘉艺", "杨皓亮", 
+            "殷雅莓", "曾识瞳"
+        ];
+        
+        let intervalId;
+        let isRolling = false;
+        const nameDisplay = document.getElementById('nameDisplay'); 
+        const speedControl = document.querySelector('.speed-control'); 
+        const resultDiv = document.getElementById('result'); 
+        const confettiContainer = document.getElementById('confetti-container'); 
+        const particlesContainer = document.getElementById('particles'); 
+        
+        // 初始化粒子背景 
+        function initParticles() {
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div'); 
+                particle.classList.add('particle'); 
+                
+                // 随机大小 
+                const size = Math.random()  * 10 + 5;
+                particle.style.width  = `${size}px`;
+                particle.style.height  = `${size}px`;
+                
+                // 随机位置 
+                particle.style.left  = `${Math.random()  * 100}%`;
+                particle.style.top  = `${Math.random()  * 100}%`;
+                
+                // 随机动画延迟 
+                particle.style.animationDelay  = `${Math.random()  * 15}s`;
+                
+                particlesContainer.appendChild(particle); 
+            }
+        }
+        
+        // 创建彩色纸屑效果 
+        function createConfetti() {
+            // 清空现有纸屑 
+            confettiContainer.innerHTML  = '';
+            
+            // 创建50个纸屑 
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div'); 
+                confetti.classList.add('confetti'); 
+                
+                // 随机形状 
+                const shapes = ['circle', 'rectangle', 'triangle'];
+                const shape = shapes[Math.floor(Math.random() * shapes.length)]; 
+                
+                if (shape === 'circle') {
+                    confetti.style.borderRadius  = '50%';
+                } else if (shape === 'triangle') {
+                    confetti.style.width  = '0';
+                    confetti.style.height  = '0';
+                    confetti.style.borderLeft  = '8px solid transparent';
+                    confetti.style.borderRight  = '8px solid transparent';
+                    confetti.style.borderBottom  = '15px solid';
+                }
+                
+                // 随机颜色 
+                const colors = ['#ff4d4f', '#faad14', '#13c2c2', '#722ed1', '#eb2f96'];
+                const color = colors[Math.floor(Math.random() * colors.length)]; 
+                confetti.style.backgroundColor  = color;
+                confetti.style.borderBottomColor  = color;
+                
+                // 随机位置 
+                confetti.style.left  = `${Math.random()  * 100}%`;
+                
+                // 随机大小 
+                const size = Math.random()  * 10 + 5;
+                if (shape !== 'triangle') {
+                    confetti.style.width  = `${size}px`;
+                    confetti.style.height  = `${size}px`;
+                }
+                
+                // 随机动画时间和延迟 
+                confetti.style.animationDuration  = `${Math.random()  * 3 + 2}s`;
+                confetti.style.animationDelay  = `${Math.random()  * 0.5}s`;
+                
+                confettiContainer.appendChild(confetti); 
+            }
+        }
+        
+        // 切换抽奖状态 
+        function toggleRoll() {
+            const btn = document.querySelector('button'); 
+            
+            if (!isRolling) {
+                // 开始抽奖 
+                isRolling = true;
+                btn.textContent  = '停止抽奖';
+                resultDiv.style.opacity  = '0';
+                nameDisplay.classList.remove('selected'); 
+                startRoll();
+            } else {
+                // 停止抽奖 
+                isRolling = false;
+                btn.textContent  = '开始抽奖';
+                stopRoll();
+                showResult();
+            }
+        }
+        
+        // 开始滚动名字 
+        function startRoll() {
+            const speed = 105 - speedControl.value;  // 速度范围5-105ms 
+            intervalId = setInterval(() => {
+                const randomIndex = Math.floor(Math.random()  * names.length); 
+                nameDisplay.textContent  = names[randomIndex];
+                
+                // 添加闪烁效果 
+                nameDisplay.style.opacity  = Math.random()  * 0.5 + 0.5;
+            }, speed);
+        }
+        
+        // 停止滚动名字 
+        function stopRoll() {
+            clearInterval(intervalId);
+            nameDisplay.style.opacity  = '1';
+        }
+        
+        // 显示结果 
+        function showResult() {
+            const finalName = nameDisplay.textContent; 
+            
+            // 添加选中效果 
+            nameDisplay.classList.add('selected'); 
+            
+            // 显示结果文字 
+            resultDiv.textContent  = `恭喜 ${finalName} 成为幸运之星！✨`;
+            setTimeout(() => {
+                resultDiv.style.opacity  = '1';
+            }, 500);
+            
+            // 创建庆祝效果 
+            createConfetti();
+        }
+        
+        // 速度控制事件监听 
+        speedControl.addEventListener('input',  () => {
+            if (isRolling) {
+                stopRoll();
+                startRoll();
+            }
+        });
+        
+        // 页面加载时初始化 
+        window.onload  = function() {
+            initParticles();
+        };
+    </script>
+</body>
+</html>

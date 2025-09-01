@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态成绩分析系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script> 
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap"  rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-light: #5dade2;
+            --secondary-color: #2ecc71;
+            --secondary-light: #58d68d;
+            --accent-color: #e74c3c;
+            --accent-light: #ec7063;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --gray-color: #95a5a6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color), var(--primary-light));
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+            font-weight: 300;
+        }
+        
+        .upload-section {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .upload-section:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--primary-color);
+            border-radius: 12px;
+            padding: 40px 20px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: rgba(52, 152, 219, 0.03);
+            position: relative;
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(52, 152, 219, 0.08);
+            border-color: var(--primary-light);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            transition: var(--transition);
+        }
+        
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1);
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: var(--transition);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            outline: none;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--secondary-light);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .analysis-section {
+            display: none;
+            margin-top: 30px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            position: relative;
+        }
+        
+        .tabs::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            width: 100%;
+            z-index: 0;
+            opacity: 0.2;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray-color);
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            position: relative;
+            z-index: 1;
+            margin-right: 5px;
+        }
+        
+        .tab.active  {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .tab:hover:not(.active) {
+            color: var(--dark-color);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tab-content.active  {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chart-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            height: 400px;
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, rgba(52, 152, 219, 0.1), transparent);
+            border-radius: 0 15px 0 0;
+        }
+        
+        .student-table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+        
+        .student-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 15px;
+            min-width: 700px;
+        }
+        
+        .student-table th, .student-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .student-table th {
+            background-color: var(--dark-color);
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+        
+        .student-table tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .student-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .progress-cell {
+            display: flex;
+            align-items: center;
+            min-width: 150px;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: #eee;
+            border-radius: 4px;
+            margin-right: 10px;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .improvement-up {
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+        
+        .improvement-down {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        .student-details {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .student-select-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .student-select-container::after {
+            content: '▼';
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%); 
+            color: var(--gray-color);
+            pointer-events: none;
+        }
+        
+        .student-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: white;
+            appearance: none;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .student-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+        }
+        
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin: 15px 0;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stat-value span {
+            font-size: 1.2rem;
+            margin-left: 5px;
+            opacity: 0.8;
+        }
+        
+        .stat-label {
+            color: var(--gray-color);
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: var(--gray-color);
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .highlight {
+            background-color: rgba(46, 204, 113, 0.1);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+        
+        .warning {
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+        
+        .success {
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+        
+        .info-text {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .file-info {
+            margin-top: 15px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .file-info.success  {
+            background-color: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .file-info.warning  {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        /* 加载动画 */
+        .loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 1000;
+            text-align: center;
+            padding-top: 20%;
+            backdrop-filter: blur(3px);
+        }
+        
+        .loader-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .loader-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        .loader-text {
+            font-size: 1.1rem;
+            color: var(--dark-color);
+            margin-bottom: 10px;
+        }
+        
+        .loader-subtext {
+            font-size: 0.9rem;
+            color: var(--gray-color);
+            margin-top: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            header {
+                padding: 20px 0;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .upload-section {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 30px 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+                padding-bottom: 5px;
+            }
+            
+            .tab {
+                padding: 10px 15px;
+            }
+            
+            .student-table th, .student-table td {
+                padding: 10px;
+            }
+        }
+        
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        
+        /* 工具提示 */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark-color);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            font-weight: normal;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载提示 -->
+    <div class="loader" id="loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div class="loader-text">正在分析数据</div>
+            <div class="loader-subtext" id="loaderSubtext">请稍候，我们正在处理您的成绩数据...</div>
+        </div>
+    </div>
+ 
+    <header>
+        <div class="container">
+            <h1>动态成绩分析系统</h1>
+            <div class="subtitle">智能分析学生多次考试成绩变化趋势</div>
+        </div>
+    </header>
+ 
+    <div class="container">
+        <div class="upload-section">
+            <h2>上传成绩数据</h2>
+            <p>支持动态分析任意次数的考试成绩数据</p>
+            <div class="upload-area" id="dropArea">
+                <div class="upload-icon">📊</div>
+                <p>拖拽Excel或CSV文件到此处</p>
+                <p class="info-text">支持格式: .xlsx, .xls, .csv</p>
+            </div>
+            <div class="btn-group">
+                <button class="btn" id="uploadBtn">选择文件</button>
+                <button class="btn btn-secondary" id="sampleBtn">下载示例文件</button>
+            </div>
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display: none;">
+            <div id="fileInfo" class="file-info"></div>
+        </div>
+ 
+        <div class="analysis-section" id="analysisSection">
+            <div class="tabs">
+                <div class="tab active" data-tab="overall">整体分析</div>
+                <div class="tab" data-tab="individual">个体分析</div>
+                <div class="tab" data-tab="advanced">高级分析</div>
+            </div>
+ 
+            <div class="tab-content active" id="overall">
+                <h2>整体成绩分析</h2>
+                <div class="stats-grid" id="overallStats">
+                    <!-- 动态生成的统计卡片 -->
+                </div>
+ 
+                <div class="chart-container">
+                    <canvas id="overallChart"></canvas>
+                </div>
+ 
+                <h3>成绩分布分析</h3>
+                <div class="chart-container">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+ 
+                <h3>所有学生成绩</h3>
+                <div class="student-table-container">
+                    <table class="student-table" id="allStudentsTable">
+                        <thead>
+                            <tr id="tableHeaderRow">
+                                <!-- 动态生成表头 -->
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <!-- 学生数据将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+ 
+            <div class="tab-content" id="individual">
+                <h2>个体成绩分析</h2>
+                <div class="student-select-container">
+                    <select class="student-select" id="studentSelect">
+                        <option value="">选择学生...</option>
+                        <!-- 学生选项将通过JavaScript动态填充 -->
+                    </select>
+                </div>
+ 
+                <div class="student-details" id="studentDetails" style="display: none;">
+                    <div class="chart-container">
+                        <canvas id="studentChart"></canvas>
+                    </div>
+ 
+                    <div class="stats-grid" id="studentStats">
+                        <!-- 动态生成的学生统计卡片 -->
+                    </div>
+ 
+                    <h3>学习表现分析</h3>
+                    <div id="studentAnalysis">
+                        <!-- 动态生成的分析内容 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="advanced">
+                <h2>高级分析</h2>
+                <div class="chart-container">
+                    <canvas id="correlationChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="rankingChart"></canvas>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">成绩相关性</div>
+                        <div class="stat-value" id="correlationValue">0.00</div>
+                        <div class="stat-label" id="correlationLabel">首次与末次考试</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">成绩提升率</div>
+                        <div class="stat-value" id="improvementRate">0%</div>
+                        <div class="stat-label">班级整体提升情况</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    <div class="footer">
+        <p>动态成绩分析系统 &copy; 2025 | 最后更新时间: 2025年4月29日</p>
+    </div>
+ 
+    <script>
+        // 全局变量存储学生数据和考试信息 
+        let studentsData = [];
+        let testNames = [];
+        let testCount = 0;
+        let overallChart, distributionChart, studentChart, correlationChart, rankingChart;
+ 
+        // DOM元素 
+        const dropArea = document.getElementById('dropArea'); 
+        const fileInput = document.getElementById('fileInput'); 
+        const uploadBtn = document.getElementById('uploadBtn'); 
+        const sampleBtn = document.getElementById('sampleBtn'); 
+        const fileInfo = document.getElementById('fileInfo'); 
+        const analysisSection = document.getElementById('analysisSection'); 
+        const tableHeaderRow = document.getElementById('tableHeaderRow'); 
+        const studentsTableBody = document.getElementById('studentsTableBody'); 
+        const studentSelect = document.getElementById('studentSelect'); 
+        const studentDetails = document.getElementById('studentDetails'); 
+        const loader = document.getElementById('loader'); 
+        const loaderSubtext = document.getElementById('loaderSubtext'); 
+        const overallStats = document.getElementById('overallStats'); 
+        const studentStats = document.getElementById('studentStats'); 
+        const studentAnalysis = document.getElementById('studentAnalysis'); 
+ 
+        // 颜色方案 
+        const chartColors = [
+            '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', 
+            '#1abc9c', '#d35400', '#34495e', '#16a085', '#c0392b'
+        ];
+ 
+        // 初始化事件监听 
+        function initEventListeners() {
+            // 拖拽上传功能 
+            dropArea.addEventListener('dragover',  (e) => {
+                e.preventDefault(); 
+                dropArea.style.backgroundColor  = 'rgba(52, 152, 219, 0.1)';
+            });
+ 
+            dropArea.addEventListener('dragleave',  () => {
+                dropArea.style.backgroundColor  = 'rgba(52, 152, 219, 0.03)';
+            });
+ 
+            dropArea.addEventListener('drop',  (e) => {
+                e.preventDefault(); 
+                dropArea.style.backgroundColor  = 'rgba(52, 152, 219, 0.03)';
+                if (e.dataTransfer.files.length)  {
+                    fileInput.files  = e.dataTransfer.files; 
+                    handleFileUpload(e.dataTransfer.files[0]); 
+                }
+            });
+ 
+            // 文件选择按钮 
+            uploadBtn.addEventListener('click',  () => {
+                fileInput.click(); 
+            });
+ 
+            // 示例文件按钮 
+            sampleBtn.addEventListener('click',  downloadSampleFile);
+ 
+            // 文件输入变化 
+            fileInput.addEventListener('change',  () => {
+                if (fileInput.files.length)  {
+                    handleFileUpload(fileInput.files[0]); 
+                }
+            });
+ 
+            // 学生选择变化 
+            studentSelect.addEventListener('change',  (e) => {
+                const selectedStudent = studentsData.find(s  => s.name  === e.target.value); 
+                if (selectedStudent) {
+                    renderStudentDetails(selectedStudent);
+                } else {
+                    studentDetails.style.display  = 'none';
+                }
+            });
+ 
+            // 标签切换 
+            document.querySelectorAll('.tab').forEach(tab  => {
+                tab.addEventListener('click',  () => {
+                    document.querySelectorAll('.tab').forEach(t  => t.classList.remove('active')); 
+                    document.querySelectorAll('.tab-content').forEach(c  => c.classList.remove('active')); 
+                    
+                    tab.classList.add('active'); 
+                    document.getElementById(tab.dataset.tab).classList.add('active'); 
+                    
+                    // 重新渲染图表以适应容器大小变化 
+                    setTimeout(() => {
+                        if (tab.dataset.tab  === 'overall' && overallChart) {
+                            overallChart.resize(); 
+                            distributionChart.resize(); 
+                        } else if (tab.dataset.tab  === 'individual' && studentChart) {
+                            studentChart.resize(); 
+                        } else if (tab.dataset.tab  === 'advanced' && correlationChart) {
+                            correlationChart.resize(); 
+                            rankingChart.resize(); 
+                        }
+                    }, 10);
+                });
+            });
+        }
+ 
+        // 下载示例文件 
+        function downloadSampleFile() {
+            loader.style.display  = 'block';
+            loaderSubtext.textContent  = '正在准备示例文件...';
+            
+            // 创建一个示例数据 
+            const sampleData = [
+                {姓名: '张三', 第一次考试: 75, 第二次考试: 82, 第三次考试: 88, 第四次考试: 85},
+                {姓名: '李四', 第一次考试: 68, 第二次考试: 72, 第三次考试: 70, 第四次考试: 78},
+                {姓名: '王五', 第一次考试: 90, 第二次考试: 88, 第三次考试: 92, 第四次考试: 95},
+                {姓名: '赵六', 第一次考试: 60, 第二次考试: 65, 第三次考试: 72, 第四次考试: 80},
+                {姓名: '钱七', 第一次考试: 85, 第二次考试: 80, 第三次考试: 78, 第四次考试: 82}
+            ];
+            
+            // 创建工作簿 
+            const wb = XLSX.utils.book_new(); 
+            const ws = XLSX.utils.json_to_sheet(sampleData); 
+            XLSX.utils.book_append_sheet(wb,  ws, "成绩数据");
+            
+            // 生成Excel文件并下载 
+            setTimeout(() => {
+                XLSX.writeFile(wb,  "学生成绩示例数据.xlsx");
+                loader.style.display  = 'none';
+            }, 500);
+        }
+ 
+        // 文件验证 
+        function validateFile(file) {
+            const validTypes = [
+                'application/vnd.ms-excel', 
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+                'text/csv'
+            ];
+            return validTypes.includes(file.type)  || 
+                   ['.xlsx', '.xls', '.csv'].some(ext => file.name.toLowerCase().endsWith(ext)); 
+        }
+ 
+        // 处理文件上传 
+        function handleFileUpload(file) {
+            if (!validateFile(file)) {
+                fileInfo.textContent  = '错误: 仅支持Excel或CSV文件';
+                fileInfo.className  = 'file-info warning';
+                fileInfo.style.display  = 'block';
+                return;
+            }
+ 
+            loader.style.display  = 'block';
+            loaderSubtext.textContent  = `正在处理: ${file.name}`; 
+            fileInfo.textContent  = `正在处理: ${file.name}`; 
+            fileInfo.className  = 'file-info success';
+            fileInfo.style.display  = 'block';
+ 
+            const reader = new FileReader();
+            
+            reader.onload  = function(e) {
+                try {
+                    const data = e.target.result; 
+                    const fileExt = file.name.split('.').pop().toLowerCase(); 
+                    
+                    if (fileExt === 'csv') {
+                        parseCSV(data);
+                    } else {
+                        parseExcel(data);
+                    }
+                } catch (error) {
+                    console.error(' 文件处理错误:', error);
+                    fileInfo.textContent  = `错误: ${error.message}`; 
+                    fileInfo.className  = 'file-info warning';
+                    loader.style.display  = 'none';
+                }
+            };
+ 
+            reader.onerror  = () => {
+                fileInfo.textContent  = '错误: 文件读取失败';
+                fileInfo.className  = 'file-info warning';
+                loader.style.display  = 'none';
+            };
+ 
+            if (file.name.toLowerCase().endsWith('.csv'))  {
+                reader.readAsText(file); 
+            } else {
+                reader.readAsArrayBuffer(file); 
+            }
+        }
+ 
+        // 解析CSV文件 
+        function parseCSV(data) {
+            // 处理可能的BOM头 
+            if (data.charCodeAt(0)  === 0xFEFF) {
+                data = data.substr(1); 
+            }
+ 
+            const lines = data.split('\n').filter(line  => line.trim()); 
+            const headers = lines[0].split(',').map(h => h.trim()); 
+ 
+            // 检查必要字段 
+            if (!headers.includes('姓名')) {
+                throw new Error('CSV文件缺少"姓名"列');
+            }
+ 
+            // 提取考试名称 (排除"姓名"列)
+            testNames = headers.filter(h  => h !== '姓名');
+            testCount = testNames.length; 
+            
+            if (testCount < 2) {
+                throw new Error('至少需要两次考试数据进行分析');
+            }
+ 
+            studentsData = [];
+            
+            for (let i = 1; i < lines.length;  i++) {
+                if (!lines[i].trim()) continue;
+                
+                const values = lines[i].split(',');
+                const student = {};
+                
+                headers.forEach((header,  index) => {
+                    student[header] = values[index] ? values[index].trim() : '';
+                });
+ 
+                studentsData.push(student); 
+            }
+ 
+            processAndRenderData();
+        }
+ 
+        // 解析Excel文件 
+        function parseExcel(data) {
+            try {
+                const workbook = XLSX.read(data,  { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet); 
+ 
+                // 检查是否有数据 
+                if (jsonData.length  === 0) {
+                    throw new Error('Excel文件中没有数据');
+                }
+ 
+                // 提取表头 
+                const headers = Object.keys(jsonData[0]  || {});
+ 
+                // 检查必要字段 
+                if (!headers.includes('姓名')) {
+                    throw new Error('Excel文件缺少"姓名"列');
+                }
+ 
+                // 提取考试名称 (排除"姓名"列)
+                testNames = headers.filter(h  => h !== '姓名');
+                testCount = testNames.length; 
+                
+                if (testCount < 2) {
+                    throw new Error('至少需要两次考试数据进行分析');
+                }
+ 
+                studentsData = jsonData.map(row  => {
+                    const student = { '姓名': row['姓名'] || '' };
+                    testNames.forEach(test  => {
+                        student[test] = row[test] || 0;
+                    });
+                    return student;
+                }).filter(student => student['姓名'] !== ''); // 过滤掉无名数据 
+ 
+                processAndRenderData();
+            } catch (error) {
+                console.error('Excel 解析错误:', error);
+                fileInfo.textContent  = `错误: ${error.message}`; 
+                fileInfo.className  = 'file-info warning';
+                loader.style.display  = 'none';
+            }
+        }
+ 
+        // 处理并渲染数据 
+        function processAndRenderData() {
+            // 处理学生数据 
+            studentsData = studentsData.map(student  => {
+                // 提取成绩数据 
+                const scores = testNames.map(test  => {
+                    const score = parseFloat(student[test]);
+                    return isNaN(score) ? 0 : score;
+                });
+ 
+                // 计算统计数据 
+                const firstScore = scores[0];
+                const lastScore = scores[scores.length - 1];
+                const improvement = lastScore - firstScore;
+                const improvementRate = firstScore ? (improvement / firstScore * 100).toFixed(1) : 0;
+                
+                // 计算平均分 
+                const avg = scores.reduce((sum,  score) => sum + score, 0) / scores.length; 
+                
+                // 计算标准差 (稳定性)
+                const variance = scores.reduce((sum,  score) => sum + Math.pow(score  - avg, 2), 0) / scores.length; 
+                const stability = Math.sqrt(variance).toFixed(1); 
+                
+                // 计算趋势 (使用线性回归斜率)
+                const trend = calculateTrend(scores);
+                
+                return {
+                    name: student['姓名'] || '未知',
+                    scores,
+                    improvement,
+                    improvementRate,
+                    stability,
+                    avg,
+                    trend,
+                    firstScore,
+                    lastScore 
+                };
+            }).filter(student => student.name  !== '未知');
+ 
+            renderAnalysis();
+        }
+ 
+        // 计算成绩趋势 (线性回归斜率)
+        function calculateTrend(scores) {
+            const n = scores.length; 
+            const xSum = n * (n - 1) / 2; // 0 + 1 + 2 + ... + (n-1)
+            const xMean = xSum / n;
+            const ySum = scores.reduce((sum,  score) => sum + score, 0);
+            const yMean = ySum / n;
+            
+            let numerator = 0;
+            let denominator = 0;
+            
+            for (let i = 0; i < n; i++) {
+                numerator += (i - xMean) * (scores[i] - yMean);
+                denominator += Math.pow(i  - xMean, 2);
+            }
+            
+            // 返回斜率，表示趋势强度 
+            return denominator !== 0 ? numerator / denominator : 0;
+        }
+ 
+        // 渲染分析结果 
+        function renderAnalysis() {
+            // 显示分析区域 
+            analysisSection.style.display  = 'block';
+ 
+            // 计算整体统计数据 
+            const classAvgScores = testNames.map((_,  i) => {
+                return calculateAverage(studentsData.map(s  => s.scores[i])); 
+            });
+            
+            const firstAvg = classAvgScores[0];
+            const lastAvg = classAvgScores[classAvgScores.length - 1];
+            const avgImprovement = lastAvg - firstAvg;
+            const avgImprovementRate = firstAvg ? (avgImprovement / firstAvg * 100).toFixed(1) : 0;
+            
+            // 找出进步最大的学生 
+            const mostImproved = studentsData.reduce((prev,  current) => 
+                (current.improvement  > prev.improvement)  ? current : prev, 
+                {improvement: -Infinity});
+ 
+            // 找出退步最大的学生 
+            const mostDeclined = studentsData.reduce((prev,  current) => 
+                (current.improvement  < prev.improvement)  ? current : prev, 
+                {improvement: Infinity});
+ 
+            // 找出最稳定的学生 
+            const mostStable = studentsData.reduce((prev,  current) => 
+                (parseFloat(current.stability)  < parseFloat(prev.stability))  ? current : prev, 
+                {stability: Infinity});
+ 
+            // 找出成绩最好的学生 (最后一次考试)
+            const topStudent = studentsData.reduce((prev,  current) => 
+            (current.lastScore  > prev.lastScore)  ? current : prev, 
+                {lastScore: -Infinity});
+ 
+            // 找出成绩最差的学生 (最后一次考试)
+            const bottomStudent = studentsData.reduce((prev,  current) => 
+                (current.lastScore  < prev.lastScore)  ? current : prev, 
+                {lastScore: Infinity});
+ 
+            // 渲染整体统计卡片 
+            renderOverallStats({
+                classAvgScores,
+                avgImprovement,
+                avgImprovementRate,
+                mostImproved,
+                mostDeclined,
+                mostStable,
+                topStudent,
+                bottomStudent 
+            });
+ 
+            // 渲染整体图表 
+            renderOverallChart(classAvgScores);
+            
+            // 渲染成绩分布图表 
+            renderDistributionChart(studentsData);
+            
+            // 渲染学生表格 
+            renderStudentsTable();
+            
+            // 填充学生选择下拉框 
+            renderStudentSelect();
+            
+            // 渲染高级分析图表 
+            renderAdvancedCharts();
+            
+            // 隐藏加载器 
+            setTimeout(() => {
+                loader.style.display  = 'none';
+                fileInfo.textContent  = `分析完成: 共 ${studentsData.length}  名学生数据`;
+            }, 500);
+        }
+ 
+        // 渲染整体统计卡片 
+        function renderOverallStats(stats) {
+            overallStats.innerHTML  = `
+                <div class="stat-card">
+                    <div class="stat-label">班级平均分</div>
+                    <div class="stat-value">${stats.classAvgScores[stats.classAvgScores.length  - 1].toFixed(1)}<span>/100</span></div>
+                    <div class="stat-label">末次考试</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">整体进步</div>
+                    <div class="stat-value ${stats.avgImprovement  >= 0 ? 'success' : 'warning'}">
+                        ${stats.avgImprovement  >= 0 ? '+' : ''}${stats.avgImprovement.toFixed(1)} 
+                    </div>
+                    <div class="stat-label">首次到末次考试</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">进步率</div>
+                    <div class="stat-value ${stats.avgImprovementRate  >= 0 ? 'success' : 'warning'}">
+                        ${stats.avgImprovementRate  >= 0 ? '+' : ''}${stats.avgImprovementRate}% 
+                    </div>
+                    <div class="stat-label">相对首次考试</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">进步最大</div>
+                    <div class="stat-value success">${stats.mostImproved.name}</div> 
+                    <div class="stat-label">+${stats.mostImproved.improvement.toFixed(1)} 分</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">退步最大</div>
+                    <div class="stat-value warning">${stats.mostDeclined.name}</div> 
+                    <div class="stat-label">${stats.mostDeclined.improvement.toFixed(1)} 分</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">最稳定</div>
+                    <div class="stat-value">${stats.mostStable.name}</div> 
+                    <div class="stat-label">波动±${stats.mostStable.stability} 分</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">最高分</div>
+                    <div class="stat-value success">${stats.topStudent.name}</div> 
+                    <div class="stat-label">${stats.topStudent.lastScore} 分</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">最低分</div>
+                    <div class="stat-value warning">${stats.bottomStudent.name}</div> 
+                    <div class="stat-label">${stats.bottomStudent.lastScore} 分</div>
+                </div>
+            `;
+        }
+ 
+        // 渲染整体趋势图表 
+        function renderOverallChart(classAvgScores) {
+            const ctx = document.getElementById('overallChart').getContext('2d'); 
+            
+            if (overallChart) {
+                overallChart.destroy(); 
+            }
+            
+            overallChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: testNames,
+                    datasets: [{
+                        label: '班级平均分',
+                        data: classAvgScores,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: '#3498db',
+                        pointRadius: 5,
+                        pointHoverRadius: 7 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '班级成绩变化趋势',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `平均分: ${context.parsed.y.toFixed(1)}`; 
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false 
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: Math.max(0,  Math.min(...classAvgScores)  - 10),
+                            max: Math.min(100,  Math.max(...classAvgScores)  + 10),
+                            title: {
+                                display: true,
+                                text: '分数'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '考试'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+ 
+        // 渲染成绩分布图表 
+        function renderDistributionChart(studentsData) {
+            const ctx = document.getElementById('distributionChart').getContext('2d'); 
+            const lastScores = studentsData.map(s  => s.lastScore); 
+            
+            // 创建分数段 (0-10, 10-20, ..., 90-100)
+            const ranges = Array.from({length:  10}, (_, i) => ({
+                min: i * 10,
+                max: (i + 1) * 10,
+                count: 0 
+            }));
+            
+            lastScores.forEach(score  => {
+                const index = Math.min(Math.floor(score  / 10), 9);
+                ranges[index].count++;
+            });
+            
+            if (distributionChart) {
+                distributionChart.destroy(); 
+            }
+            
+            distributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ranges.map(r  => `${r.min}-${r.max}`), 
+                    datasets: [{
+                        label: '学生人数',
+                        data: ranges.map(r  => r.count), 
+                        backgroundColor: ranges.map((_,  i) => 
+                            `hsl(${200 - i * 20}, 70%, 60%)`),
+                        borderColor: ranges.map((_,  i) => 
+                            `hsl(${200 - i * 20}, 70%, 40%)`),
+                        borderWidth: 1 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '末次考试成绩分布',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.y} 名学生 (${((context.parsed.y  / studentsData.length)  * 100).toFixed(1)}%)`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false 
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '学生人数'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '分数段'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+ 
+        // 渲染学生表格 
+        function renderStudentsTable() {
+            // 清空表头 
+            tableHeaderRow.innerHTML  = '';
+            
+            // 添加表头 
+            const headerCells = ['姓名', ...testNames, '进步', '稳定性', '平均分'];
+            headerCells.forEach(header  => {
+                const th = document.createElement('th'); 
+                th.textContent  = header;
+                tableHeaderRow.appendChild(th); 
+            });
+            
+            // 清空表格内容 
+            studentsTableBody.innerHTML  = '';
+            
+            // 添加学生数据行 
+            studentsData.forEach(student  => {
+                const tr = document.createElement('tr'); 
+                
+                // 姓名列 
+                const nameTd = document.createElement('td'); 
+                nameTd.textContent  = student.name; 
+                tr.appendChild(nameTd); 
+                
+                // 各次考试成绩 
+                student.scores.forEach(score  => {
+                    const scoreTd = document.createElement('td'); 
+                    scoreTd.textContent  = score.toFixed(1); 
+                    tr.appendChild(scoreTd); 
+                });
+                
+                // 进步列 
+                const improvementTd = document.createElement('td'); 
+                const improvementClass = student.improvement  >= 0 ? 'improvement-up' : 'improvement-down';
+                improvementTd.innerHTML  = `
+                    <div class="progress-cell">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${Math.abs(student.improvement)}%"></div> 
+                        </div>
+                        <span class="${improvementClass}">
+                            ${student.improvement  >= 0 ? '+' : ''}${student.improvement.toFixed(1)} 
+                        </span>
+                    </div>
+                `;
+                tr.appendChild(improvementTd); 
+                
+                // 稳定性列 
+                const stabilityTd = document.createElement('td'); 
+                stabilityTd.textContent  = student.stability; 
+                tr.appendChild(stabilityTd); 
+                
+                // 平均分列 
+                const avgTd = document.createElement('td'); 
+                avgTd.textContent  = student.avg.toFixed(1); 
+                tr.appendChild(avgTd); 
+                
+                studentsTableBody.appendChild(tr); 
+            });
+        }
+ 
+        // 渲染学生选择下拉框 
+        function renderStudentSelect() {
+            studentSelect.innerHTML  = '<option value="">选择学生...</option>';
+            
+            studentsData.forEach(student  => {
+                const option = document.createElement('option'); 
+                option.value  = student.name; 
+                option.textContent  = `${student.name}  (${student.lastScore.toFixed(1)} 分)`;
+                studentSelect.appendChild(option); 
+            });
+        }
+ 
+        // 渲染学生详情 
+        function renderStudentDetails(student) {
+            studentDetails.style.display  = 'block';
+            
+            // 渲染学生趋势图表 
+            renderStudentChart(student);
+            
+            // 渲染学生统计卡片 
+            renderStudentStats(student);
+            
+            // 渲染学生分析 
+            renderStudentAnalysis(student);
+        }
+ 
+        // 渲染学生趋势图表 
+        function renderStudentChart(student) {
+            const ctx = document.getElementById('studentChart').getContext('2d'); 
+            
+            if (studentChart) {
+                studentChart.destroy(); 
+            }
+            
+            studentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: testNames,
+                    datasets: [
+                        {
+                            label: '学生成绩',
+                            data: student.scores, 
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true,
+                            pointBackgroundColor: '#e74c3c',
+                            pointRadius: 5,
+                            pointHoverRadius: 7 
+                        },
+                        {
+                            label: '班级平均',
+                            data: testNames.map((_,  i) => 
+                                calculateAverage(studentsData.map(s  => s.scores[i]))), 
+                            borderColor: '#3498db',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0 
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${student.name} 的成绩趋势`,
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label; 
+                                    const value = context.parsed.y.toFixed(1); 
+                                    return `${label}: ${value}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: Math.max(0,  Math.min(...student.scores)  - 15),
+                            max: Math.min(100,  Math.max(...student.scores)  + 15),
+                            title: {
+                                display: true,
+                                text: '分数'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '考试'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+ 
+        // 渲染学生统计卡片 
+        function renderStudentStats(student) {
+            // 计算排名 
+            const sortedByLastScore = [...studentsData].sort((a, b) => b.lastScore  - a.lastScore); 
+            const rank = sortedByLastScore.findIndex(s  => s.name  === student.name)  + 1;
+            const percentile = ((studentsData.length  - rank) / studentsData.length  * 100).toFixed(1);
+            
+            // 计算与班级平均的比较 
+            const classLastAvg = calculateAverage(studentsData.map(s  => s.lastScore)); 
+            const vsClassAvg = student.lastScore  - classLastAvg;
+            
+            // 计算趋势描述 
+            let trendDescription = '';
+            if (student.trend  > 1) {
+                trendDescription = '快速上升';
+            } else if (student.trend  > 0.3) {
+                trendDescription = '稳步上升';
+            } else if (student.trend  < -1) {
+                trendDescription = '快速下降';
+            } else if (student.trend  < -0.3) {
+                trendDescription = '逐步下降';
+            } else {
+                trendDescription = '相对稳定';
+            }
+            
+            studentStats.innerHTML  = `
+                <div class="stat-card">
+                    <div class="stat-label">当前成绩</div>
+                    <div class="stat-value">${student.lastScore.toFixed(1)}<span>/100</span></div> 
+                    <div class="stat-label">末次考试</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">班级排名</div>
+                    <div class="stat-value">${rank}<span>/${studentsData.length}</span></div> 
+                    <div class="stat-label">超过${percentile}%的同学</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">与班级比较</div>
+                    <div class="stat-value ${vsClassAvg >= 0 ? 'success' : 'warning'}">
+                        ${vsClassAvg >= 0 ? '+' : ''}${vsClassAvg.toFixed(1)} 
+                    </div>
+                    <div class="stat-label">对比班级平均</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">成绩趋势</div>
+                    <div class="stat-value ${student.trend  > 0 ? 'success' : (student.trend  < 0 ? 'warning' : '')}">
+                        ${trendDescription}
+                    </div>
+                    <div class="stat-label">斜率: ${student.trend.toFixed(2)}</div> 
+                </div>
+            `;
+        }
+ 
+        // 渲染学生分析 
+        function renderStudentAnalysis(student) {
+            // 计算最佳和最差科目 
+            const bestTestIndex = student.scores.indexOf(Math.max(...student.scores)); 
+            const worstTestIndex = student.scores.indexOf(Math.min(...student.scores)); 
+            
+            // 计算稳定性描述 
+            let stabilityDescription = '';
+            if (student.stability  < 5) {
+                stabilityDescription = '非常稳定';
+            } else if (student.stability  < 10) {
+                stabilityDescription = '较为稳定';
+            } else if (student.stability  < 15) {
+                stabilityDescription = '波动较大';
+            } else {
+                stabilityDescription = '非常不稳定';
+            }
+            
+            // 生成分析文本 
+            studentAnalysis.innerHTML  = `
+                <h4>学习表现分析</h4>
+                <p>${student.name} 同学在${testNames.length} 次考试中表现出${student.improvement  >= 0 ? '进步' : '退步'}趋势，
+                从首次考试的<strong>${student.firstScore.toFixed(1)} 分</strong>到末次考试的<strong>${student.lastScore.toFixed(1)} 分</strong>，
+                ${student.improvement  >= 0 ? '进步了' : '退步了'}<strong>${Math.abs(student.improvement).toFixed(1)} 分</strong>。</p>
+                
+                <p>成绩${student.improvement  >= 0 ? '提升' : '下降'}率为<strong>${Math.abs(student.improvementRate)}%</strong> ，
+                成绩波动性为<strong>±${student.stability} 分</strong>，属于${stabilityDescription}范围。</p>
+                
+                <p>最佳表现出现在<strong>${testNames[bestTestIndex]}</strong>考试中，取得了<strong>${student.scores[bestTestIndex].toFixed(1)} 分</strong>；
+                而最需要提高的是<strong>${testNames[worstTestIndex]}</strong>考试，成绩为<strong>${student.scores[worstTestIndex].toFixed(1)} 分</strong>。</p>
+                
+                ${student.trend  > 0 ? `
+                <p class="success">从整体趋势来看，该同学保持${student.trend  > 0.5 ? '显著' : ''}上升趋势，
+                说明${student.trend  > 0.5 ? '学习方法非常有效' : '学习状态良好'}。</p>
+                ` : student.trend  < 0 ? `
+                <p class="warning">从整体趋势来看，该同学呈现${student.trend  < -0.5 ? '明显' : ''}下降趋势，
+                需要${student.trend  < -0.5 ? '立即调整学习策略' : '关注学习状态'}。</p>
+                ` : `
+                <p>从整体趋势来看，该同学成绩保持相对稳定，没有明显上升或下降趋势。</p>
+                `}
+            `;
+        }
+ 
+        // 渲染高级分析图表 
+        function renderAdvancedCharts() {
+            // 计算相关性数据 
+            const firstScores = studentsData.map(s  => s.firstScore); 
+            const lastScores = studentsData.map(s  => s.lastScore); 
+            const correlation = calculateCorrelation(firstScores, lastScores);
+            
+            document.getElementById('correlationValue').textContent  = correlation.toFixed(2); 
+            document.getElementById('correlationLabel').textContent  = '首次与末次考试成绩相关性';
+            
+            // 渲染相关性图表 
+            renderCorrelationChart(firstScores, lastScores);
+            
+            // 渲染排名变化图表 
+            renderRankingChart();
+            
+            // 计算并显示成绩提升率 
+            const improvedStudents = studentsData.filter(s  => s.improvement  > 0).length;
+            const improvementRate = (improvedStudents / studentsData.length  * 100).toFixed(1);
+            document.getElementById('improvementRate').textContent  = `${improvementRate}%`;
+        }
+ 
+        // 计算皮尔逊相关系数 
+        function calculateCorrelation(x, y) {
+            const n = x.length; 
+            const xMean = x.reduce((sum,  val) => sum + val, 0) / n;
+            const yMean = y.reduce((sum,  val) => sum + val, 0) / n;
+            
+            let numerator = 0;
+            let xDenominator = 0;
+            let yDenominator = 0;
+            
+            for (let i = 0; i < n; i++) {
+                numerator += (x[i] - xMean) * (y[i] - yMean);
+                xDenominator += Math.pow(x[i]  - xMean, 2);
+                yDenominator += Math.pow(y[i]  - yMean, 2);
+            }
+            
+            return numerator / Math.sqrt(xDenominator  * yDenominator);
+        }
+ 
+        // 渲染相关性图表 
+        function renderCorrelationChart(firstScores, lastScores) {
+            const ctx = document.getElementById('correlationChart').getContext('2d'); 
+            
+            if (correlationChart) {
+                correlationChart.destroy(); 
+            }
+            
+            correlationChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '学生成绩变化',
+                        data: firstScores.map((score,  i) => ({
+                            x: score,
+                            y: lastScores[i]
+                        })),
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1,
+                        pointRadius: 6,
+                        pointHoverRadius: 8 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '首次与末次考试成绩相关性',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const student = studentsData[context.dataIndex];
+                                    return [
+                                        `学生: ${student.name}`, 
+                                        `首次: ${context.parsed.x.toFixed(1)} 分`,
+                                        `末次: ${context.parsed.y.toFixed(1)} 分`,
+                                        `变化: ${(context.parsed.y  - context.parsed.x).toFixed(1)} 分`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: '末次考试成绩'
+                            },
+                            min: 0,
+                            max: 100 
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '首次考试成绩'
+                            },
+                            min: 0,
+                            max: 100 
+                        }
+                    }
+                }
+            });
+        }
+ 
+        // 渲染排名变化图表 
+        function renderRankingChart() {
+            const ctx = document.getElementById('rankingChart').getContext('2d'); 
+            
+            // 计算每个学生的排名变化 
+            const sortedByFirst = [...studentsData].sort((a, b) => b.firstScore  - a.firstScore); 
+            const sortedByLast = [...studentsData].sort((a, b) => b.lastScore  - a.firstScore); 
+            
+            const rankingData = studentsData.map(student  => {
+                const firstRank = sortedByFirst.findIndex(s  => s.name  === student.name)  + 1;
+                const lastRank = sortedByLast.findIndex(s  => s.name  === student.name)  + 1;
+                return {
+                    name: student.name, 
+                    firstRank,
+                    lastRank,
+                    rankChange: firstRank - lastRank  // 正数表示进步 
+                };
+            }).sort((a, b) => b.rankChange  - a.rankChange);   // 按进步幅度排序 
+            
+            const top10Improved = rankingData.slice(0,  10);
+            const top10Declined = [...rankingData].reverse().slice(0, 10);
+            
+            if (rankingChart) {
+                rankingChart.destroy(); 
+            }
+            
+            rankingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [...top10Improved.map(s  => s.name),  ...top10Declined.map(s  => s.name)], 
+                    datasets: [
+                        {
+                            label: '首次排名',
+                            data: [...top10Improved.map(s  => s.firstRank),  ...top10Declined.map(s  => s.firstRank)], 
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)'
+                        },
+                        {
+                            label: '末次排名',
+                            data: [...top10Improved.map(s  => s.lastRank),  ...top10Declined.map(s  => s.lastRank)], 
+                            backgroundColor: 'rgba(46, 204, 113, 0.7)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '学生排名变化 (进步最大和退步最大的各10名学生)',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const index = context.dataIndex; 
+                                    const student = index < 10 ? top10Improved[index] : top10Declined[index - 10];
+                                    return `排名变化: ${student.rankChange  >= 0 ? '+' : ''}${student.rankChange}`; 
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            reverse: true,
+                            title: {
+                                display: true,
+                                text: '排名 (数字越小表示排名越高)'
+                            },
+                            min: 1 
+                        }
+                    }
+                }
+            });
+        }
+ 
+        // 计算数组平均值 
+        function calculateAverage(arr) {
+            return arr.reduce((sum,  val) => sum + val, 0) / arr.length; 
+        }
+ 
+        // 初始化 
+        document.addEventListener('DOMContentLoaded',  () => {
+            initEventListeners();
+        });
+    </script>
+</body>
+</html>
